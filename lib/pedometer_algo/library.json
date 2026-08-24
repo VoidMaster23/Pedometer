@@ -1,0 +1,9 @@
+{
+  "name": "pedometer_algo",
+  "version": "1.0.0",
+  "build": {
+    "flags": [
+      "-std=gnu++23"
+    ]
+  }
+}
