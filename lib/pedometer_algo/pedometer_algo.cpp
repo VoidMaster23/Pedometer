@@ -4,23 +4,24 @@
 #include <algorithm>
 #include <array>
 #include <ranges>
+#include "embedded_utils.h"
 
-#define FILTER_ORDER 9
-#define THRESHOLD_ORDER 4
-#define WINDOW_SIZE (FILTER_ORDER << 2) + 1
-#define SENSITIVITY 410     // this is 0.1g on an mpu 6050
-#define INITIAL_OFFSET 4096 // offset by 1g (might not be needed but hey again fuck it we ball)
-#define MIN_INITIAL_VALUE 0
-#define ONE_SEC 100 // the number of samples we will be considering in a second
-#define REGULATION_MODE_OFF_TIMEOUT (ONE_SEC << 1)
+constexpr int8_t FILTER_ORDER{9};
+constexpr int8_t THRESHOLD_ORDER{4};
+constexpr int8_t WINDOW_SIZE{(FILTER_ORDER << 2) + 1};
 
-#define THRESHOLD_STEP_COUNT_FOR_REGULATION 6
+constexpr int16_t SENSITIVITY{410};     // this is 0.1g on an mpu 6050
+constexpr int16_t INITIAL_OFFSET{4096}; // offset by 1g (might not be needed but hey again fuck it we ball)
 
-constexpr int8_t EMA_ALPHA = 2;
+constexpr int8_t ONE_SEC{100}; // the number of samples we will be considering in a second
+constexpr int16_t REGULATION_MODE_OFF_TIMEOUT{(ONE_SEC << 1)};
 
-int32_t accumulator_x;
-int32_t accumulator_y;
-int32_t accumulator_z;
+constexpr int8_t THRESHOLD_STEP_COUNT_FOR_REGULATION {6};
+
+
+Utils::EMA_filter<int32_t> accumulator_x;
+Utils::EMA_filter<int32_t> accumulator_y;
+Utils::EMA_filter<int32_t> accumulator_z;
 
 // Globals (for now, some will be moved into the actual count steps function as I see fit)
 int32_t raw_data[FILTER_ORDER];
@@ -87,10 +88,6 @@ void PedometerAlgo::initGlobals()
     window_max_value = 0;
     window_min_value = 0;
 
-    accumulator_x = 0;
-    accumulator_y = 0;
-    accumulator_z = 0;
-
     next_index_in_average = 0;
     next_index_in_buffer = 0;
     next_index_in_threshold = 0;
@@ -119,31 +116,22 @@ void PedometerAlgo::initGlobals()
     step_count = 0;
 }
 
-int16_t ema_filter(int16_t value, int32_t &accumulator)
-{
-    int16_t average;
-    accumulator += value;
-    average = (accumulator - (accumulator < 0) + (1 << (EMA_ALPHA - 1))) >> EMA_ALPHA;
-    accumulator -= average;
-    return value - average;
-}
-
 void add_data_to_buffers(int16_t x, int16_t y, int16_t z)
 {
-    int16_t fltered_x = ema_filter(x, accumulator_x);
-    int16_t fltered_y = ema_filter(y, accumulator_y);
-    int16_t fltered_z = ema_filter(z, accumulator_z);
+
+    
+    int32_t fltered_x = accumulator_x.ema_filter(x);
+    int32_t fltered_y = accumulator_y.ema_filter(y);
+    int32_t fltered_z = accumulator_z.ema_filter(z);
 
     int32_t input_data = abs(fltered_x) + abs(fltered_y) + abs(fltered_z);
-    // filtered_data = filtered_data + input_data - raw_data[next_index_in_average];
-    // filtered_mean = filtered_data / FILTER_ORDER;
+
     std::array<uint32_t, FILTER_ORDER> median_data{};
     std::ranges::copy(std::begin(raw_data), std::end(raw_data), std::begin(median_data));
     std::ranges::nth_element(median_data, median_data.begin() + median_data.size() / 2);
     raw_data[next_index_in_average] = input_data;
     filtered_window[next_index_in_buffer] = median_data[median_data.size() / 2];
 }
-
 
 void detect_max_min()
 {
