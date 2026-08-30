@@ -77,18 +77,18 @@ public:
 
         case State::WaitingForMin:
             samples_since_max++;
-            if (is_min_centered)
+            if (samples_since_max >= ONE_SEC)
+            {
+                state = State::Idle;
+                samples_since_max = 0;
+                return TickEvent::Timeout;
+            }
+            else if (is_min_centered)
             {
                 last_min_value = min;
                 state = State::Idle;
                 samples_since_max = 0;
                 return TickEvent::CycleComplete;
-            }
-            else if (samples_since_max >= ONE_SEC)
-            {
-                state = State::Idle;
-                samples_since_max = 0;
-                return TickEvent::Timeout;
             }
             return TickEvent::None;
 

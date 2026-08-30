@@ -52,6 +52,11 @@ int32_t PedometerAlgo::count_steps(int16_t x, int16_t y, int16_t z)
     add_data_to_buffers(x, y, z);
     auto [min, max] = get_max_min_window_indices();
 
+    if ((max.value - min.value) > Utils::SENSITIVITY)
+    {
+        threshold.update(max.value, min.value);
+    }
+
     bool is_max_in_middle = filtered_window.circular_delta(max.index) < 2;
     bool is_min_in_middle = filtered_window.circular_delta(min.index) < 2;
 
@@ -65,10 +70,9 @@ int32_t PedometerAlgo::count_steps(int16_t x, int16_t y, int16_t z)
         // Serial.println(min.value);
         algo_iterations = 0;
 
-                if (is_valid_amplitude(last_max_value, last_min_value))
+        if (is_valid_amplitude(last_max_value, last_min_value))
         {
             threshold.threshold_count = 0;
-            threshold.update(last_max_value, last_min_value);
 
             if (is_regulation_mode_active)
             {
