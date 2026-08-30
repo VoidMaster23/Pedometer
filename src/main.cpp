@@ -28,6 +28,8 @@ sensors_event_t accel, temp, gyro;
 
 int16_t acc_x, acc_y, acc_z;
 
+PedometerAlgo pedometer{};
+
 void setup()
 {
   Serial.begin(115200);
@@ -58,7 +60,6 @@ void setup()
     display.display();
   }
 
-  PedometerAlgo::initGlobals(); // pedometer
   pinMode(LED, OUTPUT);
 }
 
@@ -83,15 +84,15 @@ void loop()
     acc_y = (Wire.read() << 8) | Wire.read();
     acc_z = (Wire.read() << 8) | Wire.read();
 
-    Serial.print("AccX: ");
-    Serial.print(acc_x);
-    Serial.print(" | AccY: ");
-    Serial.print(acc_y);
-    Serial.print(" | AccZ: ");
-    Serial.println(acc_z);
+    // Serial.print("AccX: ");
+    // Serial.print(acc_x);
+    // Serial.print(" | AccY: ");
+    // Serial.print(acc_y);
+    // Serial.print(" | AccZ: ");
+    // Serial.println(acc_z);
 
-    int32_t step_count = PedometerAlgo::count_steps(acc_x, acc_y, acc_z);
-    Serial.println(step_count);
+    int32_t step_count = pedometer.count_steps(acc_x, acc_y, acc_z);
+    // Serial.println(step_count);
 
     char buffer[64];
 
