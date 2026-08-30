@@ -1,18 +1,17 @@
 #include "pedometer_algo.h"
 #include <cmath>
-
 #include <algorithm>
 #include <array>
 #include <ranges>
 #include "embedded_utils.h"
 
-void PedometerAlgo::add_data_to_buffers(int16_t x, int16_t y, int16_t z)
+auto PedometerAlgo::add_data_to_buffers(int16_t accel_x, int16_t accel_y, int16_t accel_z) -> void
 {
-    int32_t fltered_x = accumulator_x.ema_filter(x);
-    int32_t fltered_y = accumulator_y.ema_filter(y);
-    int32_t fltered_z = accumulator_z.ema_filter(z);
+    int32_t filtered_x{accumulator_x.ema_filter(accel_x)};
+    int32_t filtered_y{accumulator_y.ema_filter(accel_y)};
+    int32_t filtered_z{accumulator_z.ema_filter(accel_z)};
 
-    int32_t input_data = std::abs(fltered_x) + std::abs(fltered_y) + std::abs(fltered_z);
+    int32_t input_data{std::abs(filtered_x) + std::abs(filtered_y) + std::abs(filtered_z)};
 
     std::array<int32_t, FILTER_ORDER> median_data{};
     std::ranges::copy(raw_data, std::begin(median_data));
@@ -22,9 +21,10 @@ void PedometerAlgo::add_data_to_buffers(int16_t x, int16_t y, int16_t z)
     filtered_window.push(median_data[median_data.size() / 2]);
 }
 
-Utils::MinMaxResult<int32_t> PedometerAlgo::get_max_min_window_indices()
+auto PedometerAlgo::get_max_min_window_indices() -> Utils::MinMaxResult<int32_t>
 {
-    const auto [min, max] = std::ranges::minmax_element(filtered_window);
+    const auto min = std::ranges::min_element(filtered_window);
+    const auto max = std::ranges::max_element(filtered_window);
 
     const auto min_index = std::distance(filtered_window.begin(), min);
     const auto max_index = std::distance(filtered_window.begin(), max);
@@ -32,41 +32,36 @@ Utils::MinMaxResult<int32_t> PedometerAlgo::get_max_min_window_indices()
     Utils::MinMaxResult<int32_t> result{};
 
     result.max.value = *max;
-    result.max.index = max_index;
+    result.max.index = static_cast<std::size_t>(max_index);
 
     result.min.value = *min;
-    result.min.index = min_index;
+    result.min.index = static_cast<std::size_t>(min_index);
 
     return result;
 }
 
-constexpr bool PedometerAlgo::is_valid_amplitude(const int32_t peak, const int32_t valley) const noexcept
+auto PedometerAlgo::count_steps(int16_t accel_x, int16_t accel_y, int16_t accel_z) -> int32_t
 {
-    return peak > (threshold.old_threshold + (Utils::SENSITIVITY >> 1)) && ((valley + (Utils::SENSITIVITY >> 1)) < threshold.old_threshold);
-}
-
-int32_t PedometerAlgo::count_steps(int16_t x, int16_t y, int16_t z)
-{
-    add_data_to_buffers(x, y, z);
+    add_data_to_buffers(accel_x, accel_y, accel_z);
     auto [min, max] = get_max_min_window_indices();
 
     if ((max.value - min.value) > Utils::SENSITIVITY)
     {
-        threshold.update(max.value, min.value);
+        (void)threshold.update(max.value, min.value);
     }
 
-    bool is_max_in_middle = filtered_window.circular_delta(max.index) < 2;
-    bool is_min_in_middle = filtered_window.circular_delta(min.index) < 2;
+    bool is_max_in_middle{filtered_window.circular_delta(max.index) < 2};
+    bool is_min_in_middle{filtered_window.circular_delta(min.index) < 2};
 
     TickEvent tick_result = process_tick(is_max_in_middle, is_min_in_middle, max.value, min.value);
 
     switch (tick_result)
     {
     case TickEvent::CycleComplete:
-        // Serial.print(max.value);
-        // Serial.print(" ");
-        // Serial.println(min.value);
-        algo_iterations = 0;
+        if ((last_max_value - last_min_value) > Utils::SENSITIVITY)
+        {
+            algo_iterations = 0;
+        }
 
         if (is_valid_amplitude(last_max_value, last_min_value))
         {
@@ -98,6 +93,7 @@ int32_t PedometerAlgo::count_steps(int16_t x, int16_t y, int16_t z)
             }
         }
         break;
+
     case TickEvent::Timeout:
         possible_steps = 0;
         break;

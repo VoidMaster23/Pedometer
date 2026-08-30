@@ -23,12 +23,14 @@ constexpr unsigned long SAMPLE_RATE_HZ = 100;
 constexpr unsigned long SAMPLE_INTERVAL_MS = 1000 / SAMPLE_RATE_HZ;
 unsigned long last_sample_time = 0;
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-sensors_event_t accel, temp, gyro;
+static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+static sensors_event_t accel, temp, gyro;
 
-int16_t acc_x, acc_y, acc_z;
+static int16_t acc_x{0};
+static int16_t acc_y{0};
+static int16_t acc_z{0};
 
-PedometerAlgo pedometer{};
+static PedometerAlgo pedometer{};
 
 void setup()
 {

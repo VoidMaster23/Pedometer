@@ -37,9 +37,9 @@ private:
     Utils::CircularBuffer<int32_t, FILTER_ORDER> raw_data{};
     Utils::CircularBuffer<int32_t, WINDOW_SIZE> filtered_window{};
 
-    void add_data_to_buffers(int16_t x, int16_t y, int16_t z);
+    auto add_data_to_buffers(int16_t accel_x, int16_t accel_y, int16_t accel_z) -> void;
 
-    Utils::MinMaxResult<int32_t> get_max_min_window_indices();
+    auto get_max_min_window_indices() -> Utils::MinMaxResult<int32_t>;
 
     State state = State::Idle;
     int16_t samples_since_max{0};
@@ -55,14 +55,16 @@ private:
 
     Utils::ThresholdState threshold;
 
-    [[nodiscard]] constexpr bool is_valid_amplitude(const int32_t peak, const int32_t valley) const noexcept;
-
-    // void determine_possible_step()
+    [[nodiscard]] constexpr auto is_valid_amplitude(const int32_t peak, const int32_t valley) const noexcept -> bool
+    {
+        return peak > (threshold.old_threshold + (Utils::SENSITIVITY >> 1)) &&
+               ((valley + (Utils::SENSITIVITY >> 1)) < threshold.old_threshold);
+    }
 
 public:
     PedometerAlgo() = default;
 
-    constexpr TickEvent process_tick(bool is_max_centered, bool is_min_centered, int32_t max, int32_t min)
+    constexpr auto process_tick(bool is_max_centered, bool is_min_centered, int32_t max, int32_t min) -> TickEvent
     {
         switch (state)
         {
@@ -97,23 +99,25 @@ public:
         }
     }
 
-    [[nodiscard]] constexpr State current_state() const noexcept
+    [[nodiscard]] constexpr auto current_state() const noexcept -> State
     {
         return state;
     }
 
-    [[nodiscard]] constexpr bool is_waiting_for_min() const noexcept
+    [[nodiscard]] constexpr auto is_waiting_for_min() const noexcept -> bool
     {
         return state == State::WaitingForMin;
     }
 
-    void reset_counts() noexcept
+    auto reset_counts() noexcept -> void
     {
         algo_iterations = 0;
         possible_steps = 0;
         is_regulation_mode_active = false;
         threshold = Utils::ThresholdState{};
+        state = State::Idle;
+        samples_since_max = 0;
     }
 
-    int32_t count_steps(int16_t x, int16_t y, int16_t z);
+    auto count_steps(int16_t accel_x, int16_t accel_y, int16_t accel_z) -> int32_t;
 };
