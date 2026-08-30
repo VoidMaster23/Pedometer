@@ -11,7 +11,7 @@ TEST(PedometerCSVTest, ValidateDatasetAccuracy) {
     std::string line;
     std::getline(file, line); // Skip header
 
-    PedometerAlgo::initGlobals();
+    PedometerAlgo algo;
 
     int32_t step_count = 0;
     while (std::getline(file, line)) {
@@ -28,7 +28,7 @@ TEST(PedometerCSVTest, ValidateDatasetAccuracy) {
         int16_t y = static_cast<int16_t>(std::stoi(y_str));
         int16_t z = static_cast<int16_t>(std::stoi(z_str));
 
-        step_count = PedometerAlgo::count_steps(x, y, z);
+        step_count = algo.count_steps(x, y, z);
     }
 
     // Baseline: Expected 867
