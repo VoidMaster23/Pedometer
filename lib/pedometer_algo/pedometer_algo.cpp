@@ -45,6 +45,7 @@ auto PedometerAlgo::count_steps(int16_t accel_x, int16_t accel_y, int16_t accel_
     add_data_to_buffers(accel_x, accel_y, accel_z);
     auto [min, max] = get_max_min_window_indices();
 
+    // Always keep threshold updating to maintain baseline adaptation
     if ((max.value - min.value) > Utils::SENSITIVITY)
     {
         (void)threshold.update(max.value, min.value);
@@ -58,11 +59,13 @@ auto PedometerAlgo::count_steps(int16_t accel_x, int16_t accel_y, int16_t accel_
     switch (tick_result)
     {
     case TickEvent::CycleComplete:
+        // Always reset inactivity on significant cycle, regardless of step validity
         if ((last_max_value - last_min_value) > Utils::SENSITIVITY)
         {
             algo_iterations = 0;
         }
 
+        // Validate step based on the threshold (now updated on every cycle)
         if (is_valid_amplitude(last_max_value, last_min_value))
         {
             threshold.threshold_count = 0;
