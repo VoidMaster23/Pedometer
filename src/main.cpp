@@ -23,10 +23,14 @@ constexpr unsigned long SAMPLE_RATE_HZ = 100;
 constexpr unsigned long SAMPLE_INTERVAL_MS = 1000 / SAMPLE_RATE_HZ;
 unsigned long last_sample_time = 0;
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-sensors_event_t accel, temp, gyro;
+static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+static sensors_event_t accel, temp, gyro;
 
-int16_t acc_x, acc_y, acc_z;
+static int16_t acc_x{0};
+static int16_t acc_y{0};
+static int16_t acc_z{0};
+
+static PedometerAlgo pedometer{};
 
 void setup()
 {
@@ -58,7 +62,6 @@ void setup()
     display.display();
   }
 
-  PedometerAlgo::initGlobals(); // pedometer
   pinMode(LED, OUTPUT);
 }
 
@@ -83,15 +86,15 @@ void loop()
     acc_y = (Wire.read() << 8) | Wire.read();
     acc_z = (Wire.read() << 8) | Wire.read();
 
-    Serial.print("AccX: ");
-    Serial.print(acc_x);
-    Serial.print(" | AccY: ");
-    Serial.print(acc_y);
-    Serial.print(" | AccZ: ");
-    Serial.println(acc_z);
+    // Serial.print("AccX: ");
+    // Serial.print(acc_x);
+    // Serial.print(" | AccY: ");
+    // Serial.print(acc_y);
+    // Serial.print(" | AccZ: ");
+    // Serial.println(acc_z);
 
-    int32_t step_count = PedometerAlgo::count_steps(acc_x, acc_y, acc_z);
-    Serial.println(step_count);
+    int32_t step_count = pedometer.count_steps(acc_x, acc_y, acc_z);
+    // Serial.println(step_count);
 
     char buffer[64];
 

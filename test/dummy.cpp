@@ -15,6 +15,7 @@
 **/
 
 #include <gtest/gtest.h>
+#include "pedometer_algo.h"
 
 TEST(DummyTest, ShouldPass)
 {
