@@ -130,6 +130,7 @@ namespace Utils
                 dynamic_threshold = dynamic_threshold - dynamic_threshold_buffer.head_element() + new_threshold;
                 old_threshold = dynamic_threshold / THRESHOLD_ORDER;
                 dynamic_threshold_buffer.push(new_threshold);
+                dynamic_threshold_buffer.advance_head();
                 return true;
             }
             return false;
