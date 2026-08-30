@@ -59,15 +59,12 @@ auto PedometerAlgo::count_steps(int16_t accel_x, int16_t accel_y, int16_t accel_
     switch (tick_result)
     {
     case TickEvent::CycleComplete:
-        // Always reset inactivity on significant cycle, regardless of step validity
-        if ((last_max_value - last_min_value) > Utils::SENSITIVITY)
-        {
-            algo_iterations = 0;
-        }
-
-        // Validate step based on the threshold (now updated on every cycle)
         if (is_valid_amplitude(last_max_value, last_min_value))
         {
+            if ((last_max_value - last_min_value) > Utils::SENSITIVITY)
+            {
+                algo_iterations = 0;
+            }
             threshold.threshold_count = 0;
 
             if (is_regulation_mode_active)
