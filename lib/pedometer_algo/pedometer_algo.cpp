@@ -6,8 +6,6 @@
 #include <ranges>
 #include "embedded_utils.h"
 
-#include <Arduino.h>
-
 void PedometerAlgo::add_data_to_buffers(int16_t x, int16_t y, int16_t z)
 {
     int32_t fltered_x = accumulator_x.ema_filter(x);
@@ -81,10 +79,8 @@ int32_t PedometerAlgo::count_steps(int16_t x, int16_t y, int16_t z)
             else
             {
                 possible_steps++;
-                Serial.println(possible_steps);
                 if (possible_steps >= THRESHOLD_STEP_COUNT_FOR_REGULATION)
                 {
-                    Serial.println("HERE");
                     step_count += possible_steps;
                     possible_steps = 0;
                     is_regulation_mode_active = true;
