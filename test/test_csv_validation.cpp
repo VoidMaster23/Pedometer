@@ -5,7 +5,7 @@
 #include <sstream>
 
 TEST(PedometerCSVTest, ValidateDatasetAccuracy) {
-    std::ifstream file("/home/edson/Downloads/normalised_data.csv");
+    std::ifstream file("test/data/normalised_data.csv");
     ASSERT_TRUE(file.is_open()) << "Failed to open dataset file";
 
     std::string line;
