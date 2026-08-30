@@ -4,6 +4,12 @@
 #include <string>
 #include <sstream>
 
+// The algorithm expects 100Hz sampling (1 sample every 10ms).
+// By processing one CSV row per call to count_steps, we are effectively 
+// feeding it the 100Hz stream. The algorithm's internal timers (ONE_SEC, 
+// REGULATION_MODE_OFF_TIMEOUT) are based on the number of calls, 
+// which corresponds to time in this stream.
+
 TEST(PedometerCSVTest, ValidateDatasetAccuracy) {
     std::ifstream file("test/data/normalised_data.csv");
     ASSERT_TRUE(file.is_open()) << "Failed to open dataset file";
@@ -28,6 +34,7 @@ TEST(PedometerCSVTest, ValidateDatasetAccuracy) {
         int16_t y = static_cast<int16_t>(std::stoi(y_str));
         int16_t z = static_cast<int16_t>(std::stoi(z_str));
 
+        // Processing one point per loop iteration simulates the 100Hz stream
         step_count = algo.count_steps(x, y, z);
     }
 

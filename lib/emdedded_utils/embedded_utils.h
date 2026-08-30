@@ -7,7 +7,7 @@
 
 namespace Utils
 {
-    static constexpr int16_t SENSITIVITY{410}; // this is 0.1g on an mpu 6050
+    static constexpr int16_t SENSITIVITY{350};
 
     template <std::integral T>
     struct SamplePoint
