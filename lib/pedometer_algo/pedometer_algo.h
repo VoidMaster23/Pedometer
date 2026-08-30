@@ -51,7 +51,7 @@ private:
     int32_t step_count{0};
     int32_t algo_iterations{0};
 
-    bool is_regulation_mode_active;
+    bool is_regulation_mode_active{false};
 
     Utils::ThresholdState threshold;
 
